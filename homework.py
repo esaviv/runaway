@@ -1,17 +1,16 @@
+from dataclasses import dataclass
+from typing import Type
+
+
+@dataclass
 class InfoMessage:
     """Информационное сообщение о тренировке."""
 
-    def __init__(self,
-                 training_type: str,
-                 duration: float,
-                 distance: float,
-                 speed: float,
-                 calories: float) -> None:
-        self.training_type = training_type
-        self.duration = duration
-        self.distance = distance
-        self.speed = speed
-        self.calories = calories
+    training_type: str
+    duration: float
+    distance: float
+    speed: float
+    calories: float
 
     def get_message(self) -> str:
         return (f'Тип тренировки: {self.training_type}; '
@@ -62,12 +61,6 @@ class Running(Training):
 
     CALORIES_MEAN_SPEED_MULTIPLIER: float = 18
     CALORIES_MEAN_SPEED_SHIFT: float = 1.79
-
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float) -> None:
-        super().__init__(action, duration, weight)
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий при беге."""
@@ -132,14 +125,17 @@ class Swimming(Training):
 
 
 def read_package(workout_type: str,
-                 data: list) -> Training:
+                 data: list[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
-    workout_types = {'RUN': Running,
-                     'WLK': SportsWalking,
-                     'SWM': Swimming}
+    workout_types: dict[str, Type[Training]] = {'RUN': Running,
+                                                'WLK': SportsWalking,
+                                                'SWM': Swimming}
 
-    training: Training = workout_types[workout_type](*data)
-    return training
+    try:
+        training: Training = workout_types[workout_type](*data)
+        return training
+    except KeyError:
+        print(f'Тренировка "{workout_type}" отсутствует в списке доступных.')
 
 
 def main(training: Training) -> None:

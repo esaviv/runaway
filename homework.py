@@ -1,5 +1,9 @@
-from dataclasses import dataclass
-from typing import Type, List, Dict
+from dataclasses import dataclass, asdict
+from typing import Type, Union, Tuple, List, Dict
+
+
+class ExceptionWorkoutType(KeyError):
+    """Класс исключения при отсутствии указанного типа тренировки"""
 
 
 @dataclass
@@ -12,12 +16,12 @@ class InfoMessage:
     speed: float
     calories: float
 
+    message = ('Тип тренировки: {}; Длительность: {:.3f} ч.; '
+               'Дистанция: {:.3f} км; Ср. скорость: {:.3f} км/ч; '
+               'Потрачено ккал: {:.3f}.')
+
     def get_message(self) -> str:
-        return (f'Тип тренировки: {self.training_type}; '
-                f'Длительность: {self.duration:.3f} ч.; '
-                f'Дистанция: {self.distance:.3f} км; '
-                f'Ср. скорость: {self.speed:.3f} км/ч; '
-                f'Потрачено ккал: {self.calories:.3f}.')
+        return self.message.format(*asdict(self).values())
 
 
 class Training:
@@ -125,17 +129,17 @@ class Swimming(Training):
 
 
 def read_package(workout_type: str,
-                 data: List[int]) -> Training:
+                 data: List[Union[float, int]]
+                 ) -> Training:
     """Прочитать данные полученные от датчиков."""
     workout_types: Dict[str, Type[Training]] = {'RUN': Running,
                                                 'WLK': SportsWalking,
                                                 'SWM': Swimming}
 
-    try:
-        training: Training = workout_types[workout_type](*data)
-        return training
-    except KeyError:
-        print(f'Тренировка "{workout_type}" отсутствует в списке доступных.')
+    if workout_type not in workout_types:
+        raise ExceptionWorkoutType(f'Тренировка "{workout_type}" '
+                                   f'отсутствует в списке доступных.')
+    return workout_types[workout_type](*data)
 
 
 def main(training: Training) -> None:
@@ -145,12 +149,12 @@ def main(training: Training) -> None:
 
 
 if __name__ == '__main__':
-    packages = [
+    packages: List[Tuple[str, List[Union[int, float]]]] = [
         ('SWM', [720, 1, 80, 25, 40]),
         ('RUN', [15000, 1, 75]),
         ('WLK', [9000, 1, 75, 180]),
     ]
 
     for workout_type, data in packages:
-        training = read_package(workout_type, data)
+        training: Training = read_package(workout_type, data)
         main(training)
